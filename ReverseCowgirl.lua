@@ -1,5 +1,5 @@
--- Diligent made it you fucking bum
---[[ 
+-- Diligent made it you bum
+--[[
  ▄▄▄▄▄▄  ▄▄▄ ▄▄▄     ▄▄▄ ▄▄▄▄▄▄▄ ▄▄▄▄▄▄▄ ▄▄    ▄ ▄▄▄▄▄▄▄ ▄▄▄▄▄▄▄ 
 █      ██   █   █   █   █       █       █  █  █ █       █       █
 █  ▄    █   █   █   █   █   ▄▄▄▄█    ▄▄▄█   █▄█ █       █    ▄▄▄█
@@ -9,7 +9,7 @@
 █▄▄▄▄▄▄██▄▄▄█▄▄▄▄▄▄▄█▄▄▄█▄▄▄▄▄▄▄█▄▄▄▄▄▄▄█▄█  █▄▄█▄▄▄▄▄▄▄█▄▄▄▄▄▄▄█                                                                                                                
 ]]--
 
---// Services
+-- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -19,241 +19,232 @@ local TeleportService = game:GetService("TeleportService")
 local Player = Players.LocalPlayer
 local CurrentCam = Workspace.CurrentCamera
 
---// UI Lib
-local require = require
+-- =========================
+-- GUI Library
+-- =========================
 local lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/UI-Libs/main/Vape.txt"))()
 local win = lib:Window("Diligence | Universal | V67 | Diligent.gbp", Color3.fromRGB(44,120,224), Enum.KeyCode.RightShift)
 
--- ============================================================
--- Fly Script
--- ============================================================
+-- =========================
+-- Universal Features
+-- =========================
 local flySettings={fly=false,flyspeed=50}
-local c local h local bv local bav local cam local flying
+local c,h,bv,bav,cam,flying
 local buttons={W=false,S=false,A=false,D=false,Moving=false}
 
-local startFly=function()
+local function startFly()
     if not Player.Character or not Player.Character.Head or flying then return end
     c=Player.Character
-    h=c.Humanoid
+    h=c:FindFirstChild("Humanoid")
+    if not h then return end
     h.PlatformStand=true
-    cam=workspace:WaitForChild('Camera')
+    cam=workspace:WaitForChild("Camera")
     bv=Instance.new("BodyVelocity")
     bav=Instance.new("BodyAngularVelocity")
     bv.Velocity,bv.MaxForce,bv.P=Vector3.new(0,0,0),Vector3.new(10000,10000,10000),1000
     bav.AngularVelocity,bav.MaxTorque,bav.P=Vector3.new(0,0,0),Vector3.new(10000,10000,10000),1000
-    bv.Parent=c.Head
-    bav.Parent=c.Head
+    bv.Parent=c:FindFirstChild("HumanoidRootPart") or c:FindFirstChild("Head")
+    bav.Parent=c:FindFirstChild("HumanoidRootPart") or c:FindFirstChild("Head")
     flying=true
-    h.Died:connect(function()flying=false end)
+    h.Died:Connect(function() flying=false end)
 end
 
-local endFly=function()
+local function endFly()
     if not Player.Character or not flying then return end
-    h.PlatformStand=false
-    bv:Destroy()
-    bav:Destroy()
+    if h then h.PlatformStand=false end
+    if bv then bv:Destroy() end
+    if bav then bav:Destroy() end
     flying=false
 end
 
-UserInputService.InputBegan:connect(function(input,GPE)
+UserInputService.InputBegan:Connect(function(input,GPE)
     if GPE then return end
-    for i,_ in pairs(buttons)do
-        if i~="Moving" and input.KeyCode==Enum.KeyCode[i]then
+    for i,_ in pairs(buttons) do
+        if i~="Moving" and input.KeyCode==Enum.KeyCode[i] then
             buttons[i]=true
             buttons.Moving=true
         end
     end
 end)
-
-UserInputService.InputEnded:connect(function(input,GPE)
+UserInputService.InputEnded:Connect(function(input,GPE)
     if GPE then return end
     local a=false
-    for i,_ in pairs(buttons)do
-        if i~="Moving"then
-            if input.KeyCode==Enum.KeyCode[i]then buttons[i]=false end
-            if buttons[i]then a=true end
+    for i,_ in pairs(buttons) do
+        if i~="Moving" then
+            if input.KeyCode==Enum.KeyCode[i] then buttons[i]=false end
+            if buttons[i] then a=true end
         end
     end
     buttons.Moving=a
 end)
 
-local setVec=function(vec)return vec*(flySettings.flyspeed/vec.Magnitude)end
-RunService.Heartbeat:connect(function(step)
+local function setVec(vec) return vec*(flySettings.flyspeed/vec.Magnitude) end
+RunService.Heartbeat:Connect(function(step)
     if flying and c and c.PrimaryPart then
         local p=c.PrimaryPart.Position
         local cf=cam.CFrame
-        local ax,ay,az=cf:toEulerAnglesXYZ()
-        c:SetPrimaryPartCFrame(CFrame.new(p.x,p.y,p.z)*CFrame.Angles(ax,ay,az))
+        local ax,ay,az=cf:ToEulerAnglesXYZ()
+        c:SetPrimaryPartCFrame(CFrame.new(p) * CFrame.Angles(ax,ay,az))
         if buttons.Moving then
             local t=Vector3.new()
-            if buttons.W then t=t+(setVec(cf.lookVector))end
-            if buttons.S then t=t-(setVec(cf.lookVector))end
-            if buttons.A then t=t-(setVec(cf.rightVector))end
-            if buttons.D then t=t+(setVec(cf.rightVector))end
+            if buttons.W then t=t+(setVec(cf.LookVector)) end
+            if buttons.S then t=t-(setVec(cf.LookVector)) end
+            if buttons.A then t=t-(setVec(cf.RightVector)) end
+            if buttons.D then t=t+(setVec(cf.RightVector)) end
             c:TranslateBy(t*step)
         end
     end
 end)
 
--- ============================================================
--- Universal Features Tabs
--- ============================================================
-local tab = win:Tab("Main")
-
--- Silent Aim (wrapped in pcall for universality)
-tab:Label("> Silent Aim")
-local silentAimEnabled = false
-tab:Toggle("Silent Aim", false, function(state)
-    silentAimEnabled = state
-    pcall(function()
-        local function getClosestEnemy()
-            local closestEnemy
-            local shortestDistance = math.huge
-            local myTeam = Player.Team
-            for _, plr in pairs(Players:GetPlayers()) do
-                if plr ~= Player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                    local rootPart = plr.Character.HumanoidRootPart
-                    local distance = (rootPart.Position - CurrentCam.CFrame.Position).Magnitude
-                    if distance < shortestDistance then
-                        if not myTeam or (myTeam and plr.Team ~= myTeam) then
-                            closestEnemy = plr
-                            shortestDistance = distance
-                        end
-                    end
-                end
-            end
-            return closestEnemy
-        end
-
-        local function run()
-            task.wait()
-            local gunModule = require(Player:WaitForChild("PlayerGui"):WaitForChild("MainGui").NewLocal.Tools.Tool.Gun)
-            local oldFunc = gunModule.ConeOfFire
-            gunModule.ConeOfFire = function(...)
-                if silentAimEnabled then
-                    local closestEnemy = getClosestEnemy()
-                    if closestEnemy and closestEnemy.Character then
-                        return closestEnemy.Character.Head.Position
-                    end
-                end
-                return oldFunc(...)
-            end
-        end
-        run()
-        Player.CharacterAdded:Connect(run)
-    end)
-end)
-
--- Hitbox
-tab:Label("> Hitbox")
-local hitboxEnabled = false
-local hitboxTransparency = 0
-local originalHitboxSize = Vector3.new(1,1,1)
-local hitboxSize = 20
-local connection
-
-local function hitboxes()
-    for _, plr in pairs(Players:GetPlayers()) do
-        if plr ~= Player and plr.Character then
-            local root = plr.Character:FindFirstChild("HumanoidRootPart")
-            if root then
-                root.CanCollide = hitboxEnabled
-                root.Transparency = hitboxEnabled and hitboxTransparency or 0
-                root.Size = hitboxEnabled and Vector3.new(hitboxSize, hitboxSize, hitboxSize) or originalHitboxSize
-            end
-        end
-    end
-end
-
-tab:Toggle("Hitbox", false, function(state)
-    hitboxEnabled = state
-    if state then
-        connection = RunService.Stepped:Connect(hitboxes)
-    else
-        if connection then connection:Disconnect() end
-        hitboxes()
-    end
-end)
-
-tab:Slider("Hitbox Size", 1, 50, hitboxSize, function(value)
-    hitboxSize = value
-    hitboxes()
-end)
-
-tab:Slider("Hitbox Transparency", 0, 1, hitboxTransparency, function(value)
-    hitboxTransparency = value
-    hitboxes()
-end)
-
--- ESP Tab
-local Visual = win:Tab("Visuals")
-Visual:Label("> ESP")
-local aj
-pcall(function()
-    aj = loadstring(game:HttpGet("https://raw.githubusercontent.com/StevenK-293/Loadstrings/main/esp.lua"))()
-end)
-
-if aj then
-    Visual:Toggle("Enable ESP", false, function(K) aj:Toggle(K) aj.Players = K end)
-    Visual:Toggle("Tracers", false, function(K) aj.Tracers = K end)
-    Visual:Toggle("Names", false, function(K) aj.Names = K end)
-    Visual:Toggle("Boxes", false, function(K) aj.Boxes = K end)
-    Visual:Toggle("TeamColor", false, function(K) aj.TeamColor = K end)
-    Visual:Toggle("TeamMates", false, function(K) aj.TeamMates = K end)
-    Visual:Colorpicker("ESP Color", Color3.fromRGB(0,0,255), function(P) aj.Color = P end)
-end
-
 -- Player Tab
-local tab3 = win:Tab("Player")
+local tab3=win:Tab("Player")
 tab3:Label("> Fly")
-tab3:Toggle("Fly", false, function(state) if state then startFly() else endFly() end end)
-tab3:Slider("Fly Speed", 1, 500, 1, function(s) flySettings.flyspeed = s end)
+tab3:Toggle("Fly",false,function(state) if state then startFly() else endFly() end end)
+tab3:Slider("Fly Speed",1,500,50,function(v) flySettings.flyspeed=v end)
 
 tab3:Label("> WalkSpeed")
-local settings = {WalkSpeed = 16, JumpPower = 50}
-local function setWalkSpeed(value)
-    settings.WalkSpeed = value
-    local humanoid = Player.Character and Player.Character:FindFirstChild("Humanoid")
-    if humanoid then humanoid.WalkSpeed = settings.WalkSpeed end
+local settings={WalkSpeed=16,JumpPower=50}
+local function setWalkSpeed(v)
+    settings.WalkSpeed=v
+    local h=Player.Character and Player.Character:FindFirstChild("Humanoid")
+    if h then h.WalkSpeed=v end
 end
-tab3:Slider("Walkspeed", 16, 500, 16, function(v) setWalkSpeed(v) end)
+tab3:Slider("WalkSpeed",16,500,16,setWalkSpeed)
 
 tab3:Label("> JumpPower")
-local function setJumpPower(value)
-    settings.JumpPower = value
-    local humanoid = Player.Character and Player.Character:FindFirstChild("Humanoid")
-    if humanoid then humanoid.JumpPower = settings.JumpPower end
+local function setJumpPower(v)
+    settings.JumpPower=v
+    local h=Player.Character and Player.Character:FindFirstChild("Humanoid")
+    if h then h.JumpPower=v end
 end
-tab3:Slider("JumpPower", 50, 500, 50, function(v) setJumpPower(v) end)
+tab3:Slider("JumpPower",50,500,50,setJumpPower)
 
 local IJ=false
-tab3:Toggle("Inf Jump", false, function(state)
+tab3:Toggle("Infinite Jump",false,function(state)
     IJ=state
-    UserInputService.JumpRequest:Connect(function()
-        if IJ and Player.Character and Player.Character:FindFirstChildOfClass("Humanoid") then
-            Player.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
-        end
+    Player.CharacterAdded:Connect(function(char)
+        local hum=char:WaitForChild("Humanoid")
+        UserInputService.JumpRequest:Connect(function()
+            if IJ then hum:ChangeState("Jumping") end
+        end)
     end)
 end)
 
--- Settings Tab
-local changeclr = win:Tab("Settings")
-local toggle=false
-local function runToggleableScript()
-    if toggle then
-        local success,err = pcall(function()
-            local voteKick = Player.PlayerGui.MenuUI.VoteKick
-            if voteKick and voteKick.Title.Text:find(Player.Name) then
-                TeleportService:Teleport(game.PlaceId)
-            end
-        end)
-        if not success then warn("[Universal Script] VoteKick check skipped:",err) end
-    end
-end
-RunService.Heartbeat:Connect(runToggleableScript)
-changeclr:Toggle("Rejoin when VoteKick", toggle, function(state) toggle=state end)
-changeclr:Colorpicker("Change UI Color", Color3.fromRGB(44,120,224), function(t)
-    lib:ChangePresetColor(Color3.fromRGB(t.R*255,t.G*255,t.B*255))
+-- Universal ESP Tab
+local Visual=win:Tab("Visuals")
+Visual:Label("> ESP")
+local esp
+pcall(function()
+    esp=loadstring(game:HttpGet("https://raw.githubusercontent.com/StevenK-293/Loadstrings/main/esp.lua"))()
 end)
+if esp then
+    Visual:Toggle("Enable ESP",false,function(K) esp:Toggle(K) esp.Players=K end)
+    Visual:Toggle("Tracers",false,function(K) esp.Tracers=K end)
+    Visual:Toggle("Names",false,function(K) esp.Names=K end)
+    Visual:Toggle("Boxes",false,function(K) esp.Boxes=K end)
+    Visual:Colorpicker("ESP Color",Color3.fromRGB(0,0,255),function(c) esp.Color=c end)
+end
 
-print("[Universal Script] Loaded successfully!")
+-- =========================
+-- Game-Specific Features with GUI Toggles
+-- =========================
+local gameId = game.PlaceId
+if gameId == 3233893879 or gameId == 292439477 then
+    local isBB = (gameId == 3233893879)
+    local gameTab = win:Tab(isBB and "Bad Business" or "Phantom Forces")
+    
+    -- Settings
+    local silentAimEnabled = true
+    local hitboxEnabled = true
+    local espEnabled = true
+    local hitboxSize = 20
+
+    -- GUI Toggles
+    gameTab:Toggle("Silent Aim", silentAimEnabled, function(state) silentAimEnabled=state end)
+    gameTab:Toggle("Hitboxes", hitboxEnabled, function(state) hitboxEnabled=state end)
+    gameTab:Toggle("ESP", espEnabled, function(state) espEnabled=state end)
+    gameTab:Slider("Hitbox Size",1,50,hitboxSize,function(v) hitboxSize=v end)
+
+    -- Silent Aim
+    local function getClosestEnemy()
+        local closestEnemy
+        local shortestDistance = math.huge
+        local myTeam = Player.Team
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr ~= Player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                if myTeam then
+                    if (isBB and plr.Team.Name ~= myTeam.Name) or (not isBB and plr.Team ~= myTeam) then
+                        local dist = (plr.Character.HumanoidRootPart.Position - CurrentCam.CFrame.Position).Magnitude
+                        if dist < shortestDistance then
+                            closestEnemy = plr
+                            shortestDistance = dist
+                        end
+                    end
+                else
+                    local dist = (plr.Character.HumanoidRootPart.Position - CurrentCam.CFrame.Position).Magnitude
+                    if dist < shortestDistance then
+                        closestEnemy = plr
+                        shortestDistance = dist
+                    end
+                end
+            end
+        end
+        return closestEnemy
+    end
+
+    -- Hook Gun
+    pcall(function()
+        local gunPath = isBB and "MainGui.NewLocal.Tools.Tool.Gun" or "GunModule"
+        local gunModule = require(Player.PlayerGui:WaitForChild(gunPath))
+        local oldFunc = gunModule.ConeOfFire
+        gunModule.ConeOfFire = function(...)
+            if silentAimEnabled then
+                local target = getClosestEnemy()
+                if target and target.Character then
+                    return target.Character.Head.CFrame * CFrame.new(math.random(0.1,0.25),math.random(0.1,0.25),math.random(0.1,0.25)).p
+                end
+            end
+            return oldFunc(...)
+        end
+    end)
+
+    -- Hitboxes
+    RunService.Stepped:Connect(function()
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr ~= Player and plr.Character then
+                local root = plr.Character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    if hitboxEnabled then
+                        root.CanCollide = false
+                        root.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
+                    else
+                        root.Size = Vector3.new(1,1,1)
+                        root.CanCollide = true
+                    end
+                end
+            end
+        end
+    end)
+
+    -- ESP
+    local esp2 = loadstring(game:HttpGet("https://raw.githubusercontent.com/StevenK-293/Loadstrings/main/esp.lua"))()
+    RunService.Heartbeat:Connect(function()
+        if espEnabled then
+            esp2:Toggle(true)
+            esp2.Boxes = true
+            esp2.Names = true
+            esp2.Tracers = true
+            esp2.TeamColor = true
+            esp2.Players = true
+            esp2.Color = isBB and Color3.fromRGB(0,0,255) or Color3.fromRGB(255,0,0)
+        else
+            esp2:Toggle(false)
+        end
+    end)
+
+    print("[Universal Script] Full features loaded for "..(isBB and "Bad Business" or "Phantom Forces"))
+else
+    print("[Universal Script] No game-specific module. Only universal features loaded.")
+end
+
+print("[Universal Script] Ready! Toggle GUI with Right Shift.")
